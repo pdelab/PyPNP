@@ -27,6 +27,8 @@ class Linear_Function(Expression):
             * self._distance
         value += self._upper_value * (x[self._coordinate] - self._mesh_min)\
             * self._distance
+    def value_shape(self):
+        return (1,)
 
 
 LinearFunction_cpp = '''
