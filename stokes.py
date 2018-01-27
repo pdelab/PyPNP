@@ -6,7 +6,7 @@ from dolfin import *
 import numpy as np
 from LinearExp import *
 from directories import *
-
+from domains import *
 
 print '##################################################'
 print '#### Solving the NS equations                 ####'
@@ -83,7 +83,10 @@ a   = ( 2.0*mu* inner( sym(grad(u)), sym(grad(v)) ) )*dx    -    ( p*div(v) )*dx
 L   = inner(f,v)*dx
 
 # Form for use in constructing preconditioner matrix
-ap = 2.0 * mu * inner(sym(grad(u)), sym(grad(v))) * dx  + p*q*dx
+ap = ( 2.0*mu* inner( sym(grad(u)), sym(grad(v)) ) )*dx    + p*q*dx \
+	+ ( 2.0*mu*(alpha1)* inner( avg(sym(grad(u))), sym(outer(v('+'),n_vec('+')) + outer(v('-'),n_vec('-'))) ) )*dS \
+	+ ( 2.0*mu*(alpha1)* inner( sym(outer(u('+'),n_vec('+')) + outer(u('-'),n_vec('-'))), avg(sym(grad(v))) ) )*dS \
+	+ ( 2.0*mu*(alpha2/h_avg)* inner( jump(u),jump(v) ) )*dS
 
 # Parameters
 tol = 1E-8
@@ -92,22 +95,11 @@ it = 0
 u0 = Constant((2.0, 0.0, 0.0))
 bc = DirichletBC(VNS.sub(0), u0, boundary)
 dof_set=np.array([0], dtype='intc')
-print dof_set
 bc_values = np.zeros(len(dof_set))
-
-def apply_bc(A,b,bc,bc_values,dof_set):
-    bc.apply(A,b)
-    A.ident_local(dof_set)
-    A.apply('insert')
-
-    b_values = b.array()
-    b_values[dof_set] = bc_values[dof_set]
-    b.set_local(b_values)
-    b.apply('insert')
 
 
 solver = PETScKrylovSolver("gmres", "amg")
-solver.set_tolerances(1E-8, 1E-8, 100, 500)
+solver.set_tolerances(1E-6, 1E-6, 100, 1000)
 solver.parameters["monitor_convergence"] = True
 
 # Newton's Loop
