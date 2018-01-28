@@ -94,9 +94,17 @@ itmax = 20
 it = 0
 u0 = Constant((2.0, 0.0, 0.0))
 bc = DirichletBC(VNS.sub(0), u0, boundary)
-dof_set=np.array([0], dtype='intc')
-bc_values = np.zeros(len(dof_set))
 
+# METHOD 1
+# pres_dof = VNS.sub(1).dofmap().dofs()
+# dof_set=np.array([pres_dof[0]], dtype='intc')
+# bc_values = np.zeros(len(dof_set))
+# METHOD 2
+# domain = CellFunction('size_t', mesh)
+domain  = MeshFunction("size_t", mesh, mesh.topology().dim()-1)
+domain.set_all(0)
+domain.set_value(0, 1)
+bc2 = DirichletBC(VNS.sub(1), 0.0, domain,1)
 
 solver = PETScKrylovSolver("gmres", "amg")
 solver.set_tolerances(1E-6, 1E-6, 100, 1000)
@@ -107,11 +115,15 @@ print "Starting Newton's loop..."
 A = assemble(a)
 b = assemble(L)
 P = assemble(ap)
-apply_bc(A,b,bc,bc_values,dof_set)
-apply_bc(P,b,bc,bc_values,dof_set)
+# apply_bc(A,b,bc,bc_values,dof_set)
+# apply_bc(P,b,bc,bc_values,dof_set)
+bc.apply(A,b)
+bc2.apply(A,b)
+bc.apply(P)
+bc2.apply(P)
 
-# solver.set_operator(A)
-solver.set_operators(A, P)
+solver.set_operator(A)
+# solver.set_operators(A, P)
 solver.solve(Solution.vector(), b)
 Temp = Solution.split(True)
 uu.vector()[:] = Temp[0].vector()[:]
