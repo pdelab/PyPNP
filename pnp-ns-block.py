@@ -49,7 +49,7 @@ AnionExpression = Expression(LinearFunction_cpp, degree=2)
 AnionExpression.update(0, -Lx/2.0, Lx/2.0, -2.0, 0.0)
 PotentialExpression = Expression(LinearFunction_cpp, degree=2)
 PotentialExpression.update(0, -Lx/2.0, Lx/2.0, -1.0, 1.0)
-VitExpression= Expression(("-sin(x[0]*pi)", "0.0","0.0"), degree=2)
+VitExpression= Expression(("0.0", "0.0","0.0"), degree=2)
 PresExpression = Expression("0.0", degree=2)
 
 
@@ -188,12 +188,14 @@ while (res > tol) and (it < itmax):
     # Extract the individual submatrices
     [[A, B],
      [C, D]] = AA
-    Ap = ILU(A)
-    Dp = AMG(D)
-    prec = block_mat([[Ap, 0],
-                      [0, Dp]])
+    # Ap = ILU(A)
+    # Dp = AMG(D)
+    # prec = block_mat([[Ap, 0],
+    #                   [0, Dp]])
+    prec = block_mat([[A, 0],
+                      [C, D]])
 
-    AAinv = MinRes(AA, precond=prec, tolerance=1e-10, maxiter=1000, show=2)
+    AAinv = LGMRES(AA, precond=prec, tolerance=1e-10, maxiter=500, show=2)
     sol_pnp, sol_ns = AAinv * bb
 
     CatCat.vector()[:] += sol_pnp[cat_dof]
