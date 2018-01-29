@@ -30,7 +30,7 @@ Ly = 2.0
 Lz = 2.0
 P1 = Point(-Lx/2.0, -Ly/2.0, -Lz/2.0)
 P2 = Point(Lx/2.0, Ly/2.0, Lz/2.0)
-mesh = BoxMesh(P1, P2, 50, 5, 5)
+mesh = BoxMesh(P1, P2, 25, 5, 5)
 FMesh = File(IMG_DIR+"mesh.pvd")    # Plot the Mesh
 FMesh << mesh
 FMeshX = File(DATA_DIR+"mesh.xml")  # Print the Mesh
@@ -108,8 +108,16 @@ itmax = 20
 it = 0
 u0 = Constant((0.0, 0.0, 0.0))
 bc = DirichletBC(V, u0, boundary)
-solver = PETScKrylovSolver("gmres", "ilu")
-solver.set_tolerances(1E-8, 1E-8, 100, 500)
+if parameters["linear_algebra_backend"] == "PETSc":
+    solver = PETScKrylovSolver("gmres", "ilu")
+    solver.ksp().setGMRESRestart(10)
+if parameters["linear_algebra_backend"] == "Eigen":
+    solver = EigenKrylovSolver("gmres", "ilu")
+solver.parameters["relative_tolerance"] = 1E-8
+solver.parameters["maximum_iterations"] = 1000
+solver.parameters["nonzero_initial_guess"] = True
+solver.parameters["monitor_convergence"] = False
+
 
 # Newton's Loop
 print "Starting Newton's loop..."
