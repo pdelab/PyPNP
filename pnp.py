@@ -4,8 +4,7 @@
 """
 from dolfin import *
 import numpy as np
-from LinearExp import *
-from directories import *
+from pnpmodule import *
 
 
 print '##################################################'
@@ -13,16 +12,22 @@ print '#### Solving the PNP equations                ####'
 print '##################################################'
 
 # Chose the backend type
-parameters["linear_algebra_backend"] = "PETSc"
-# parameters["linear_algebra_backend"] = "Eigen"
+if has_linear_algebra_backend("PETSc"):
+    parameters["linear_algebra_backend"] = "PETSc"
+elif has_linear_algebra_backend("Eigen"):
+    parameters["linear_algebra_backend"] = "Eigen"
+else:
+    print "DOLFIN has not been configured with PETSc or Eigen."
+    exit()
+
 parameters["allow_extrapolation"] = True
 
 # Check and create the directories
 CLEAN = 'yes'
-DATA_DIR = "DATA/"
-IMG_DIR = "IMG/"
-CheckDir(DATA_DIR, CLEAN)
-CheckDir(IMG_DIR, CLEAN)
+DATA_DIR = "DATA_PNP/"
+IMG_DIR = "IMG_PNP/"
+files.CheckDir(DATA_DIR, CLEAN)
+files.CheckDir(IMG_DIR, CLEAN)
 
 # Create mesh and define function space
 Lx = 10.0
@@ -33,16 +38,15 @@ P2 = Point(Lx/2.0, Ly/2.0, Lz/2.0)
 mesh = BoxMesh(P1, P2, 25, 5, 5)
 FMesh = File(IMG_DIR+"mesh.pvd")    # Plot the Mesh
 FMesh << mesh
-FMeshX = File(DATA_DIR+"mesh.xml")  # Print the Mesh
-FMeshX << mesh
+DMesh = File(DATA_DIR+"mesh.xml")  # Print the Mesh
+DMesh << mesh
 
 # Two ways to do it Python or C++
-CationExpression = Linear_Function(0, -Lx/2.0, Lx/2.0, 0.0, -2.0, degree=2)
-CationExpression = Expression(LinearFunction_cpp, degree=2)
+CationExpression = Expression(expressions.LinearFunction_cpp, degree=2)
 CationExpression .update(0, -Lx/2.0, Lx/2.0, 0.0, -2.0)
-AnionExpression = Expression(LinearFunction_cpp, degree=2)
+AnionExpression = Expression(expressions.LinearFunction_cpp, degree=2)
 AnionExpression.update(0, -Lx/2.0, Lx/2.0, -2.0, 0.0)
-PotentialExpression = Expression(LinearFunction_cpp, degree=2)
+PotentialExpression = Expression(expressions.LinearFunction_cpp, degree=2)
 PotentialExpression.update(0, -Lx/2.0, Lx/2.0, -1.0, 1.0)
 
 
@@ -68,9 +72,12 @@ CatCat.interpolate(CationExpression)
 AnAn.interpolate(AnionExpression)
 EsEs.interpolate(PotentialExpression)
 Solution = Function(V)
-FCat = File(IMG_DIR+"Cat.pvd")
-FAn = File(IMG_DIR+"An.pvd")
-FPhi = File(IMG_DIR+"Phi.pvd")
+FCat = IMG_DIR+"Cat"
+FAn = IMG_DIR+"An"
+FPhi = IMG_DIR+"Phi"
+DCat = DATA_DIR+"Cat"
+DAn = DATA_DIR+"An"
+DPhi = DATA_DIR+"Phi"
 
 # Coefficients
 eps = Constant(1.0)
@@ -121,26 +128,9 @@ solver.parameters["monitor_convergence"] = False
 
 # Newton's Loop
 print "Starting Newton's loop..."
-b = assemble(L)
-A = assemble(a)
-bc.apply(A, b)
-res = b.norm("l2")
-print "\t The initial residual is ", res
-while (res > tol) and (it < itmax):
-    solver.solve(A, Solution.vector(), b)
-    Temp = Solution.split(True)
-    CatCat.vector()[:] += Temp[0].vector()[:]
-    AnAn.vector()[:] += Temp[1].vector()[:]
-    EsEs.vector()[:] += Temp[2].vector()[:]
-    FCat << CatCat
-    FAn << AnAn
-    FPhi << EsEs
-    b = assemble(L)
-    A = assemble(a)
-    bc.apply(A, b)
-    res = b.norm("l2")
-    it += 1
-    print "\t After ", it, " iterations the residual is ", res
+nlsolvers.NewtonSolver(solver,a,L,V,[bc],[CatCat,AnAn,EsEs],
+        itmax,tol,[FCat,FAn,FPhi],[DCat,DAn,DPhi],
+        Residual="relative", PrintFig=1,PrintData=1,Show=2)
 
 print '##################################################'
 print '#### End of the computation                   ####'
