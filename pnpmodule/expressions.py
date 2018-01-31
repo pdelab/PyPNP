@@ -31,6 +31,29 @@ class Linear_Function(Expression):
     def value_shape(self):
         return (1,)
 
+class Linear_Functions(Expression):
+    def __init__(self, coordinates, mesh_mins, mesh_maxs,
+                 lower_values, upper_values, **kwargs):
+        self._coordinates = coordinates
+        self._mesh_mins = mesh_mins
+        self._mesh_maxs = mesh_maxs
+        self._lower_values = lower_values
+        self._upper_values = upper_values
+        self._distances = 1.0 / (np.array(mesh_maxs) - np.array(mesh_mins))
+
+    def eval(self, value, x):
+        for i in range(3):
+            value[i] = self._lower_values[i] * \
+                       (self._mesh_maxs[i] - x[self._coordinates[i]])\
+                       * self._distances[i]
+            value[i] += self._upper_values[i] * \
+                        (x[self._coordinates[i]] - self._mesh_mins[i])\
+                        * self._distances[i]
+
+    def value_shape(self):
+        return (3,)
+
+
 
 LinearFunction_cpp = '''
 namespace dolfin {
@@ -63,6 +86,42 @@ namespace dolfin {
         double _mesh_min, _mesh_max;
         double _lower_value, _upper_value;
         double _distance;
+    };
+}
+'''
+
+LinearFunctions_cpp = '''
+namespace dolfin {
+    class Linear_Functions : public Expression
+    {
+    public:
+      Linear_Functions() : Expression(3) {};
+      void eval(Array<double>& values, const Array<double>& x) const
+      {
+          for (int i = 0; i < 3; i++){
+              values[i] = _lower_values[i] * (_mesh_maxs[i] - x[_coordinates[i]]) * _distances[i];
+              values[i] += _upper_values[i] * (x[_coordinates[i]] - _mesh_mins[i]) * _distances[i];
+          }
+      }
+      void update (
+             std::vector<std::size_t> coordinates,
+             std::vector<double> mesh_mins,
+             std::vector<double>mesh_maxs,
+             std::vector<double> lower_values,
+             std::vector<double> upper_values)
+        {
+            _coordinates = coordinates;
+             _mesh_mins = mesh_mins;
+             _mesh_maxs = mesh_maxs;
+             _lower_values = lower_values;
+             _upper_values = upper_values;
+             for (i=1;i<3;i++) _distances.append( 1.0 / (_mesh_maxs[i] - _mesh_mins[i]) );
+        }
+
+        std::vector<std::size_t> _coordinates;
+        std::vector<double> _mesh_mins, _mesh_maxs;
+        std::vector<double> _lower_values, _upper_values;
+        std::vector<double> _distances;
     };
 }
 '''
