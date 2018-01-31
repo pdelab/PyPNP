@@ -24,8 +24,8 @@ parameters["allow_extrapolation"] = True
 
 # Check and create the directories
 CLEAN = 'yes'
-DATA_DIR = "DATA_PNP/"
-IMG_DIR = "IMG_PNP/"
+DATA_DIR = "output/data_pnp/"
+IMG_DIR = "output/img_pnp/"
 files.CheckDir(DATA_DIR, CLEAN)
 files.CheckDir(IMG_DIR, CLEAN)
 
