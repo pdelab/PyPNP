@@ -2,25 +2,18 @@
 """
     Directories functions
 """
-import os, shutil
+import os
 
-def _mkdir_recursive(path):
-    sub_path = os.path.dirname(path)
-    if not os.path.exists(sub_path):
-        _mkdir_recursive(sub_path)
-    if not os.path.exists(path):
-        os.mkdir(path)
 
-def CheckDir(path, CLEAN):
-    dir = os.path.dirname(path)
-    top_dir = os.path.dirname(dir)
+def CheckDir(DIR, CLEAN):
     if (CLEAN == 'yes'):
-        if os.path.exists(dir) is True:
-            shutil.rmtree(top_dir)
+        if os.path.exists(DIR) is True:
+            for root, dirs, files in os.walk(DIR, topdown=False):
+                for clean_name in files:
+                    os.remove(root+"/"+clean_name)
+                for clean_name in dirs:
+                    os.rmdir(root+"/"+clean_name)
 
-    # make dir on designate path
-    sub_path = os.path.dirname(dir)
-    if (os.path.exists(sub_path) is False):
-        os.mkdir(sub_path)
-
-    _mkdir_recursive(dir)
+    # make directory on designate path
+    if (os.path.exists(DIR) is False):
+        os.makedirs(DIR)
