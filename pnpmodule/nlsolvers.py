@@ -15,6 +15,12 @@ def NewtonSolver(solver, a, L, V, bcs, u, itmax, tol,
         exit()
 
     it = 0
+    if isinstance(u, list) is False:
+        u = [u]
+    if isinstance(FigFiles, list)  is False:
+        FigFiles = [FigFiles]
+    if isinstance(DFiles, list)  is False:
+        DFiles = [DFiles]
     Number_of_var = len(u)
 
     if (PrintData > 0) and (it % PrintData == 0):
@@ -43,7 +49,10 @@ def NewtonSolver(solver, a, L, V, bcs, u, itmax, tol,
 
     while (res > tol) and (it < itmax):
         solver.solve(A, Solution.vector(), b)
-        Temp = Solution.split(True)
+        if Number_of_var > 1:
+            Temp = Solution.split(True)
+        else:
+            Temp = [Solution]
         for i in range(Number_of_var):
             u[i].vector()[:] += Temp[i].vector()[:]
 
@@ -59,14 +68,14 @@ def NewtonSolver(solver, a, L, V, bcs, u, itmax, tol,
             for i in range(Number_of_var):
                 u[i].vector()[:] -= Temp[i].vector()[:] / (2.0**lin_it)
                 u[i].vector()[:] += Temp[i].vector()[:] / (2.0**(lin_it+1))
-                b = assemble(L)
-                for bc in bcs:
-                    bc.apply(b)
-                if Residual == "true":
-                    new_res = b.norm("l2")
-                elif Residual == "relative":
-                    new_res = b.norm("l2") / res_init
-                lin_it += 1
+            b = assemble(L)
+            for bc in bcs:
+                bc.apply(b)
+            if Residual == "true":
+                new_res = b.norm("l2")
+            elif Residual == "relative":
+                new_res = b.norm("l2") / res_init
+            lin_it += 1
         res = new_res
 
         for i in range(Number_of_var):
