@@ -1,10 +1,18 @@
 #! /usr/bin/python2.7
 """
     This a script to solve the PNP equations
+
+    To run this programs:
+        "python2 pnp.py params.py"
 """
 from dolfin import *
 import numpy as np
 from pnpmodule import *
+
+import sys
+import imp
+params = imp.load_source("params",sys.argv[1])
+print "Important parameters from ", sys.argv[1]
 
 
 print '##################################################'
@@ -30,11 +38,8 @@ files.CheckDir(DATA_DIR, CLEAN)
 files.CheckDir(IMG_DIR, CLEAN)
 
 # Create mesh and define function space
-Lx = 10.0
-Ly = 2.0
-Lz = 2.0
-P1 = Point(-Lx/2.0, -Ly/2.0, -Lz/2.0)
-P2 = Point(Lx/2.0, Ly/2.0, Lz/2.0)
+P1 = Point(-params.Lx/2.0, -params.Ly/2.0, -params.Lz/2.0)
+P2 = Point(params.Lx/2.0, params.Ly/2.0, params.Lz/2.0)
 mesh = BoxMesh(P1, P2, 25, 5, 5)
 FMesh = File(IMG_DIR+"mesh.pvd")    # Plot the Mesh
 FMesh << mesh
@@ -43,16 +48,16 @@ DMesh << mesh
 
 # Two ways to do it Python or C++
 CationExpression = Expression(expressions.LinearFunction_cpp, degree=2)
-CationExpression .update(0, -Lx/2.0, Lx/2.0, 0.0, -2.0)
+CationExpression .update(0, -params.Lx/2.0, params.Lx/2.0, 0.0, -2.0)
 AnionExpression = Expression(expressions.LinearFunction_cpp, degree=2)
-AnionExpression.update(0, -Lx/2.0, Lx/2.0, -2.0, 0.0)
+AnionExpression.update(0, -params.Lx/2.0, params.Lx/2.0, -2.0, 0.0)
 PotentialExpression = Expression(expressions.LinearFunction_cpp, degree=2)
-PotentialExpression.update(0, -Lx/2.0, Lx/2.0, -1.0, 1.0)
+PotentialExpression.update(0, -params.Lx/2.0, params.Lx/2.0, -1.0, 1.0)
 
 
 def boundary(x, on_boundary):
-    return ((x[0] < -Lx/2.0+5*DOLFIN_EPS
-             or x[0] > Lx/2.0 - 5*DOLFIN_EPS)
+    return ((x[0] < -params.Lx/2.0+5*DOLFIN_EPS
+             or x[0] > params.Lx/2.0 - 5*DOLFIN_EPS)
             and on_boundary)
 
 
@@ -80,11 +85,11 @@ DAn = DATA_DIR+"An"
 DPhi = DATA_DIR+"Phi"
 
 # Coefficients
-eps = Constant(1.0)
-Dp = Constant(1.0)
-qp = Constant(1.0)
-Dn = Constant(1.0)
-qn = Constant(-1.0)
+eps = Constant(params.eps)
+Dp = Constant(params.Dp)
+qp = Constant(params.qp)
+Dn = Constant(params.Dn)
+qn = Constant(params.qn)
 
 # Bilinear Form
 a = (Dp*exp(CatCat) * (inner(grad(Cat), grad(cat)) +
