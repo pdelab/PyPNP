@@ -19,12 +19,11 @@ This permits the use of any compatible linear algebra solver for solving the res
 
 The FEniCS distribution uses [Docker](https://www.docker.com/) for simplicity.
 Install Docker by following [these instructions](https://docs.docker.com/docker-for-mac/install/).
-Then, run
+To run the project in a docker container, run
 ```
-  docker run -ti -v $(pwd):/home/fenics/PyPNP -w /home/fenics/PyPNP quay.io/fenicsproject/stable:current
+  ./bin/start.sh
 ```
-in this repository's root directory.
-This shares the repository's root with the Docker container so that any updates to files in the repository are available from within the Docker container.
+The Docker container will open in a shared directory to the repository's root so that any updates to files in the repository are available from within the Docker container.
 
 To exit the Docker container, simply run the `exit` command.
 
