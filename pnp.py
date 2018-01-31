@@ -31,8 +31,10 @@ else:
 parameters["allow_extrapolation"] = True
 
 # Check and create the directories
-files.CheckDir(params.DATA_DIR, params.CLEAN)
-files.CheckDir(params.IMG_DIR, params.CLEAN)
+DATA_DIR = params.DATA_DIR
+IMG_DIR = params.IMG_DIR
+files.CheckDir(DATA_DIR, params.CLEAN)
+files.CheckDir(IMG_DIR, params.CLEAN)
 
 # Create mesh and define function space
 P1 = Point(-params.Lx/2.0, -params.Ly/2.0, -params.Lz/2.0)
