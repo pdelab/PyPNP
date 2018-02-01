@@ -11,7 +11,7 @@ from pnpmodule import *
 
 import sys
 import imp
-params = imp.load_source("params",sys.argv[1])
+params = imp.load_source("params", sys.argv[1])
 print "Important parameters from ", sys.argv[1]
 
 
@@ -46,19 +46,22 @@ DMesh = File(DATA_DIR+"mesh.xml")  # Print the Mesh
 DMesh << mesh
 
 # Two ways to do it Python or C++
+coordinates = np.array(params.coordinates, dtype=np.uintp)
+mesh_mins = np.array([-params.Lx/2.0, -params.Lx/2.0,
+                      -params.Lx/2.0], dtype=np.float64)
+mesh_maxs = np.array([params.Lx/2.0, params.Lx/2.0,
+                     params.Lx/2.0], dtype=np.float64)
+lower_values = np.array(params.lower_values, dtype=np.float64)
+upper_values = np.array(params.upper_values, dtype=np.float64)
 # Python
-# uExpression = expressions.Linear_Functions(
-#             [0,0,0],
-#             [-params.Lx/2.0,-params.Lx/2.0,-params.Lx/2.0],
-#             [params.Lx/2.0,params.Lx/2.0,params.Lx/2.0],
-#             [0,-2.0,-1.0],
-#             [-2.0, 0.0, 1.0],degree=2)
+# uExpression = expressions.Linear_Functions(coordinates,
+#                                            mesh_mins, mesh_maxs,
+#                                            lower_values, upper_values,
+#                                            degree=2)
 # C++
 uExpression = Expression(expressions.LinearFunctions_cpp, degree=2)
-uExpression.update(np.array([0, 0, 0],dtype=np.uintp),
-                        np.array([-params.Lx/2.0,-params.Lx/2.0,-params.Lx/2.0],dtype=np.float64),
-                        np.array([params.Lx/2.0,params.Lx/2.0,params.Lx/2.0],dtype=np.float64),
-                        np.array([0,-2.0,-1.0],dtype=np.float64),np.array([-2.0, 0.0, 1.0],dtype=np.float64))
+uExpression.update(coordinates, mesh_mins, mesh_maxs,
+                   lower_values, upper_values)
 
 
 def boundary(x, on_boundary):
@@ -91,23 +94,23 @@ qn = Constant(params.qn)
 
 # Bilinear Form
 a = (Dp*exp(uu[0]) * (inner(grad(u[0]), grad(v[0])) +
-                       inner(grad(uu[0]) + qp * grad(uu[2]), grad(v[0]))
-                       * u[0])) * dx \
+                      inner(grad(uu[0]) + qp * grad(uu[2]), grad(v[0]))
+                      * u[0])) * dx \
     + (qp * Dp*exp(uu[0]) * inner(grad(u[2]), grad(v[0]))) * dx \
     + (Dn*exp(uu[1]) * (inner(grad(u[1]), grad(v[1])) +
-                       inner(grad(uu[1]) + qn * grad(uu[2]), grad(v[1]))
-                       * u[1])) * dx \
+                        inner(grad(uu[1]) + qn * grad(uu[2]), grad(v[1]))
+                        * u[1])) * dx \
     + (qn*Dn*exp(uu[1]) * inner(grad(u[2]), grad(v[1]))) * dx \
     + (eps * inner(grad(u[2]), grad(v[2]))) * dx \
     + (-(qp*exp(uu[0])*u[0] + qn*exp(uu[1])*u[1])*v[2]) * dx
 
 # Linear Form
 L = - (Dp * exp(uu[0]) * (inner(grad(uu[0]), grad(v[0])) +
-                           inner(grad(uu[0]) + qp*grad(uu[2]), grad(v[0]))
-                           * uu[0]))*dx \
+                          inner(grad(uu[0]) + qp*grad(uu[2]), grad(v[0]))
+                          * uu[0]))*dx \
     - (qp * Dp * exp(uu[0]) * inner(grad(uu[2]), grad(v[0])))*dx \
     - (Dn*exp(uu[1]) * (inner(grad(uu[1]), grad(v[1])) + inner(grad(uu[1]) +
-                       qn * grad(uu[2]), grad(v[1]))*uu[1]))*dx \
+                        qn * grad(uu[2]), grad(v[1]))*uu[1]))*dx \
     - (qn * Dn * exp(uu[1]) * inner(grad(uu[2]), grad(v[1]))) * dx \
     - (eps * inner(grad(uu[2]), grad(v[2]))) * dx \
     - (- (qp * exp(uu[0])*uu[0] + qn * exp(uu[1]) * uu[1]) * v[2])*dx
@@ -131,9 +134,9 @@ solver.parameters["monitor_convergence"] = False
 
 # Newton's Loop
 print "Starting Newton's loop..."
-nlsolvers.NewtonSolver(solver,a,L,V,[bc],uu,
-        itmax,tol,FFig,DData,
-        Residual="relative", PrintFig=1,PrintData=1,Show=2)
+nlsolvers.NewtonSolver(solver, a, L, V, [bc], uu,
+                       itmax, tol, FFig, DData,
+                       Residual="relative", PrintFig=1, PrintData=1, Show=2)
 
 print '##################################################'
 print '#### End of the computation                   ####'

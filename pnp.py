@@ -11,7 +11,7 @@ from pnpmodule import *
 
 import sys
 import imp
-params = imp.load_source("params",sys.argv[1])
+params = imp.load_source("params", sys.argv[1])
 print "Important parameters from ", sys.argv[1]
 
 
@@ -46,12 +46,18 @@ DMesh = File(DATA_DIR+"mesh.xml")  # Print the Mesh
 DMesh << mesh
 
 # Two ways to do it Python or C++
+coordinates = np.array(params.coordinates, dtype=np.uintp)
+lower_values = np.array(params.lower_values, dtype=np.float64)
+upper_values = np.array(params.upper_values, dtype=np.float64)
 CationExpression = Expression(expressions.LinearFunction_cpp, degree=2)
-CationExpression .update(0, -params.Lx/2.0, params.Lx/2.0, 0.0, -2.0)
+CationExpression.update(coordinates[0], -params.Lx/2.0, params.Lx/2.0,
+                        lower_values[0], upper_values[0])
 AnionExpression = Expression(expressions.LinearFunction_cpp, degree=2)
-AnionExpression.update(0, -params.Lx/2.0, params.Lx/2.0, -2.0, 0.0)
+AnionExpression.update(coordinates[1], -params.Lx/2.0, params.Lx/2.0,
+                       lower_values[1], upper_values[1])
 PotentialExpression = Expression(expressions.LinearFunction_cpp, degree=2)
-PotentialExpression.update(0, -params.Lx/2.0, params.Lx/2.0, -1.0, 1.0)
+PotentialExpression.update(coordinates[2], -params.Lx/2.0, params.Lx/2.0,
+                           lower_values[2], upper_values[2])
 
 
 def boundary(x, on_boundary):
@@ -132,9 +138,9 @@ solver.parameters["monitor_convergence"] = False
 
 # Newton's Loop
 print "Starting Newton's loop..."
-nlsolvers.NewtonSolver(solver,a,L,V,[bc],[CatCat,AnAn,EsEs],
-        itmax,tol,[FCat,FAn,FPhi],[DCat,DAn,DPhi],
-        Residual="relative", PrintFig=1,PrintData=1,Show=2)
+nlsolvers.NewtonSolver(solver, a, L, V, [bc], [CatCat, AnAn, EsEs],
+                       itmax, tol, [FCat, FAn, FPhi], [DCat, DAn, DPhi],
+                       Residual="relative", PrintFig=1, PrintData=1, Show=2)
 
 print '##################################################'
 print '#### End of the computation                   ####'
