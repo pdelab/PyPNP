@@ -116,27 +116,28 @@ L = - (Dp * exp(uu[0]) * (inner(grad(uu[0]), grad(v[0])) +
     - (- (qp * exp(uu[0])*uu[0] + qn * exp(uu[1]) * uu[1]) * v[2])*dx
 
 # Parameters
-tol = 1E-8
-itmax = 20
+tol = params.tol
+itmax = params.itmax
 it = 0
 u0 = Constant((0.0, 0.0, 0.0))
 bc = DirichletBC(V, u0, boundary)
 if parameters["linear_algebra_backend"] == "PETSc":
-    solver = PETScKrylovSolver("gmres", "ilu")
-    solver.ksp().setGMRESRestart(10)
+    solver = PETScKrylovSolver("gmres", params.linear_precon)
+    solver.ksp().setGMRESRestart(params.gmres_restart)
 if parameters["linear_algebra_backend"] == "Eigen":
-    solver = EigenKrylovSolver("gmres", "ilu")
-solver.parameters["relative_tolerance"] = 1E-8
-solver.parameters["maximum_iterations"] = 1000
-solver.parameters["nonzero_initial_guess"] = True
-solver.parameters["monitor_convergence"] = False
+    solver = EigenKrylovSolver("gmres", params.linear_precon)
+solver.parameters["relative_tolerance"] = params.linear_tol
+solver.parameters["maximum_iterations"] = params.linear_itmax
+solver.parameters["nonzero_initial_guess"] = params.nonzero_initial_guess
+solver.parameters["monitor_convergence"] = params.monitor_convergence
 
 
 # Newton's Loop
 print "Starting Newton's loop..."
-nlsolvers.NewtonSolver(solver, a, L, V, [bc], uu,
+nlsolvers.NewtonSolver(solver, a, L, V, bc, uu,
                        itmax, tol, FFig, DData,
-                       Residual="relative", PrintFig=1, PrintData=1, Show=2)
+                       Residual="relative", PrintFig=params.PrintFig,
+                       PrintData=params.PrintData, Show=params.show)
 
 print '##################################################'
 print '#### End of the computation                   ####'

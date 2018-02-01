@@ -15,6 +15,8 @@ def NewtonSolver(solver, a, L, V, bcs, u, itmax, tol,
         exit()
 
     it = 0
+    if isinstance(bcs, list) is False:
+        bcs = [bcs]
     if isinstance(u, list) is False:
         u = [u]
     if isinstance(FigFiles, list)  is False:
