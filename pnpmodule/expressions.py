@@ -115,7 +115,7 @@ namespace dolfin {
              _mesh_maxs = mesh_maxs;
              _lower_values = lower_values;
              _upper_values = upper_values;
-             for (i=1;i<3;i++) _distances.append( 1.0 / (_mesh_maxs[i] - _mesh_mins[i]) );
+             for (int i=1;i<3;i++) _distances.push_back( 1.0 / (_mesh_maxs[i] - _mesh_mins[i]) );
         }
 
         std::vector<std::size_t> _coordinates;

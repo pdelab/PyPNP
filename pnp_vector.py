@@ -54,8 +54,9 @@ DMesh << mesh
 #             [0,-2.0,-1.0],
 #             [-2.0, 0.0, 1.0],degree=2)
 # This does not work
-uExpression = Expression(expressions.LinearFunctions2_cpp, degree=2)
-uExpression.update(np.array([0,0,0]),
+uExpression = Expression(expressions.LinearFunctions_cpp, degree=2)
+
+uExpression.update(np.array([0, 0, 0],dtype='intp'),
                         np.array([-params.Lx/2.0,-params.Lx/2.0,-params.Lx/2.0]),
                         np.array([params.Lx/2.0,params.Lx/2.0,params.Lx/2.0]),
                         np.array([0,-2.0,-1.0]),np.array([-2.0, 0.0, 1.0]))
