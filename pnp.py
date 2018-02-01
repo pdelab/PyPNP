@@ -37,9 +37,10 @@ files.CheckDir(DATA_DIR, params.CLEAN)
 files.CheckDir(IMG_DIR, params.CLEAN)
 
 # Create mesh and define function space
-P1 = Point(-params.Lx/2.0, -params.Ly/2.0, -params.Lz/2.0)
-P2 = Point(params.Lx/2.0, params.Ly/2.0, params.Lz/2.0)
-mesh = BoxMesh(P1, P2, params.Nx, params.Ny, params.Nz)
+Lenghts = np.array(params.Lenghts)
+P1 = Point(-Lenghts/2.0)
+P2 = Point(Lenghts/2.0)
+mesh = BoxMesh(P1, P2, params.N[0], params.N[1], params.N[2])
 FMesh = File(IMG_DIR+"mesh.pvd")    # Plot the Mesh
 FMesh << mesh
 DMesh = File(DATA_DIR+"mesh.xml")  # Print the Mesh
@@ -50,19 +51,24 @@ coordinates = np.array(params.coordinates, dtype=np.uintp)
 lower_values = np.array(params.lower_values, dtype=np.float64)
 upper_values = np.array(params.upper_values, dtype=np.float64)
 CationExpression = Expression(expressions.LinearFunction_cpp, degree=2)
-CationExpression.update(coordinates[0], -params.Lx/2.0, params.Lx/2.0,
+CationExpression.update(coordinates[0], -Lenghts[coordinates[0]]/2.0,
+                        Lenghts[coordinates[0]]/2.0,
                         lower_values[0], upper_values[0])
 AnionExpression = Expression(expressions.LinearFunction_cpp, degree=2)
-AnionExpression.update(coordinates[1], -params.Lx/2.0, params.Lx/2.0,
+AnionExpression.update(coordinates[1], -Lenghts[coordinates[1]]/2.0,
+                       Lenghts[coordinates[0]]/2.0,
                        lower_values[1], upper_values[1])
 PotentialExpression = Expression(expressions.LinearFunction_cpp, degree=2)
-PotentialExpression.update(coordinates[2], -params.Lx/2.0, params.Lx/2.0,
+PotentialExpression.update(coordinates[2], -Lenghts[coordinates[2]]/2.0,
+                           Lenghts[coordinates[2]]/2.0,
                            lower_values[2], upper_values[2])
 
 
 def boundary(x, on_boundary):
-    return ((x[0] < -params.Lx/2.0+5*DOLFIN_EPS
-             or x[0] > params.Lx/2.0 - 5*DOLFIN_EPS)
+    return ((x[params.DirCoord] <
+             - Lenghts[params.DirCoord]/2.0+5 * DOLFIN_EPS
+            or x[params.DirCoord] >
+             Lenghts[params.DirCoord]/2.0 - 5 * DOLFIN_EPS)
             and on_boundary)
 
 

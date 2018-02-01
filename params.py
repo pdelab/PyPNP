@@ -11,12 +11,9 @@ PrintFig = 1                 # it prints every PrintFig newton's iterations
 PrintData = 1                # it prints every PrintData newton's iterations
 
 # Mesh
-Nx = 25
-Ny = 5
-Nz = 5
-Lx = 10.0
-Ly = 2.0
-Lz = 2.0
+N = [25, 5, 5]
+Lenghts = [10.0, 2.0, 2.0]
+DirCoord = 0                # 0 = x; 1 = y; 2 = z
 
 # Constants
 eps = 1.0
