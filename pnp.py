@@ -39,7 +39,7 @@ files.CheckDir(IMG_DIR, params.CLEAN)
 # Create mesh and define function space
 P1 = Point(-params.Lx/2.0, -params.Ly/2.0, -params.Lz/2.0)
 P2 = Point(params.Lx/2.0, params.Ly/2.0, params.Lz/2.0)
-mesh = BoxMesh(P1, P2, 25, 5, 5)
+mesh = BoxMesh(P1, P2, params.Nx, params.Ny, params.Nz)
 FMesh = File(IMG_DIR+"mesh.pvd")    # Plot the Mesh
 FMesh << mesh
 DMesh = File(DATA_DIR+"mesh.xml")  # Print the Mesh

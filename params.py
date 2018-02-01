@@ -7,6 +7,9 @@ CLEAN = 'yes'
 DATA_DIR = "output/data_pnp/"
 IMG_DIR = "output/img_pnp/"
 
+Nx = 25
+Ny=5
+Nz=5
 Lx = 10.0
 Ly = 2.0
 Lz = 2.0

@@ -39,27 +39,26 @@ files.CheckDir(IMG_DIR, params.CLEAN)
 # Create mesh and define function space
 P1 = Point(-params.Lx/2.0, -params.Ly/2.0, -params.Lz/2.0)
 P2 = Point(params.Lx/2.0, params.Ly/2.0, params.Lz/2.0)
-mesh = BoxMesh(P1, P2, 25, 5, 5)
+mesh = BoxMesh(P1, P2, params.Nx, params.Ny, params.Nz)
 FMesh = File(IMG_DIR+"mesh.pvd")    # Plot the Mesh
 FMesh << mesh
 DMesh = File(DATA_DIR+"mesh.xml")  # Print the Mesh
 DMesh << mesh
 
 # Two ways to do it Python or C++
-# This works
+# Python
 # uExpression = expressions.Linear_Functions(
 #             [0,0,0],
 #             [-params.Lx/2.0,-params.Lx/2.0,-params.Lx/2.0],
 #             [params.Lx/2.0,params.Lx/2.0,params.Lx/2.0],
 #             [0,-2.0,-1.0],
 #             [-2.0, 0.0, 1.0],degree=2)
-# This does not work
+# C++
 uExpression = Expression(expressions.LinearFunctions_cpp, degree=2)
-
-uExpression.update(np.array([0, 0, 0],dtype='intp'),
-                        np.array([-params.Lx/2.0,-params.Lx/2.0,-params.Lx/2.0]),
-                        np.array([params.Lx/2.0,params.Lx/2.0,params.Lx/2.0]),
-                        np.array([0,-2.0,-1.0]),np.array([-2.0, 0.0, 1.0]))
+uExpression.update(np.array([0, 0, 0],dtype=np.uintp),
+                        np.array([-params.Lx/2.0,-params.Lx/2.0,-params.Lx/2.0],dtype=np.float64),
+                        np.array([params.Lx/2.0,params.Lx/2.0,params.Lx/2.0],dtype=np.float64),
+                        np.array([0,-2.0,-1.0],dtype=np.float64),np.array([-2.0, 0.0, 1.0],dtype=np.float64))
 
 
 def boundary(x, on_boundary):
@@ -73,15 +72,15 @@ CG = FiniteElement("Lagrange", mesh.ufl_cell(), 1)
 CGFS = FunctionSpace(mesh, CG)
 V = FunctionSpace(mesh, MixedElement((CG, CG, CG)))
 
-(Cat, An, Phi) = TrialFunction(V)
-(cat, an, phi) = TestFunction(V)
+u = TrialFunction(V)
+v = TestFunction(V)
 
 #  Previous Iterates
 Solution = Function(V)
 FFig = IMG_DIR+"Solution"
 DData = DATA_DIR+"Solution"
-u = Function(V)
-u.interpolate(uExpression)
+uu = Function(V)
+uu.interpolate(uExpression)
 
 # Coefficients
 eps = Constant(params.eps)
@@ -91,27 +90,27 @@ Dn = Constant(params.Dn)
 qn = Constant(params.qn)
 
 # Bilinear Form
-a = (Dp*exp(u[0]) * (inner(grad(Cat), grad(cat)) +
-                       inner(grad(u[0]) + qp * grad(u[2]), grad(cat))
-                       * Cat)) * dx \
-    + (qp * Dp*exp(u[0]) * inner(grad(Phi), grad(cat))) * dx \
-    + (Dn*exp(u[1]) * (inner(grad(An), grad(an)) +
-                       inner(grad(u[1]) + qn * grad(u[2]), grad(an))
-                       * An)) * dx \
-    + (qn*Dn*exp(u[1]) * inner(grad(Phi), grad(an))) * dx \
-    + (eps * inner(grad(Phi), grad(phi))) * dx \
-    + (-(qp*exp(u[0])*Cat + qn*exp(u[1])*An)*phi) * dx
+a = (Dp*exp(uu[0]) * (inner(grad(u[0]), grad(v[0])) +
+                       inner(grad(uu[0]) + qp * grad(uu[2]), grad(v[0]))
+                       * u[0])) * dx \
+    + (qp * Dp*exp(uu[0]) * inner(grad(u[2]), grad(v[0]))) * dx \
+    + (Dn*exp(uu[1]) * (inner(grad(u[1]), grad(v[1])) +
+                       inner(grad(uu[1]) + qn * grad(uu[2]), grad(v[1]))
+                       * u[1])) * dx \
+    + (qn*Dn*exp(uu[1]) * inner(grad(u[2]), grad(v[1]))) * dx \
+    + (eps * inner(grad(u[2]), grad(v[2]))) * dx \
+    + (-(qp*exp(uu[0])*u[0] + qn*exp(uu[1])*u[1])*v[2]) * dx
 
 # Linear Form
-L = - (Dp * exp(u[0]) * (inner(grad(u[0]), grad(cat)) +
-                           inner(grad(u[0]) + qp*grad(u[2]), grad(cat))
-                           * u[0]))*dx \
-    - (qp * Dp * exp(u[0]) * inner(grad(u[2]), grad(cat)))*dx \
-    - (Dn*exp(u[1]) * (inner(grad(u[1]), grad(an)) + inner(grad(u[1]) +
-                       qn * grad(u[2]), grad(an))*u[1]))*dx \
-    - (qn * Dn * exp(u[1]) * inner(grad(u[2]), grad(an))) * dx \
-    - (eps * inner(grad(u[2]), grad(phi))) * dx \
-    - (- (qp * exp(u[0])*u[0] + qn * exp(u[1]) * u[1]) * phi)*dx
+L = - (Dp * exp(uu[0]) * (inner(grad(uu[0]), grad(v[0])) +
+                           inner(grad(uu[0]) + qp*grad(uu[2]), grad(v[0]))
+                           * uu[0]))*dx \
+    - (qp * Dp * exp(uu[0]) * inner(grad(uu[2]), grad(v[0])))*dx \
+    - (Dn*exp(uu[1]) * (inner(grad(uu[1]), grad(v[1])) + inner(grad(uu[1]) +
+                       qn * grad(uu[2]), grad(v[1]))*uu[1]))*dx \
+    - (qn * Dn * exp(uu[1]) * inner(grad(uu[2]), grad(v[1]))) * dx \
+    - (eps * inner(grad(uu[2]), grad(v[2]))) * dx \
+    - (- (qp * exp(uu[0])*uu[0] + qn * exp(uu[1]) * uu[1]) * v[2])*dx
 
 # Parameters
 tol = 1E-8
@@ -132,7 +131,7 @@ solver.parameters["monitor_convergence"] = False
 
 # Newton's Loop
 print "Starting Newton's loop..."
-nlsolvers.NewtonSolver(solver,a,L,V,[bc],u,
+nlsolvers.NewtonSolver(solver,a,L,V,[bc],uu,
         itmax,tol,FFig,DData,
         Residual="relative", PrintFig=1,PrintData=1,Show=2)
 

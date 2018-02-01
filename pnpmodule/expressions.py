@@ -104,24 +104,24 @@ namespace dolfin {
           }
       }
       void update (
-             std::vector<std::size_t> coordinates,
-             std::vector<double> mesh_mins,
-             std::vector<double>mesh_maxs,
-             std::vector<double> lower_values,
-             std::vector<double> upper_values)
+             std::size_t *coordinates,
+             double *mesh_mins,
+             double *mesh_maxs,
+             double *lower_values,
+             double *upper_values)
         {
             _coordinates = coordinates;
              _mesh_mins = mesh_mins;
              _mesh_maxs = mesh_maxs;
              _lower_values = lower_values;
              _upper_values = upper_values;
-             for (int i=1;i<3;i++) _distances.push_back( 1.0 / (_mesh_maxs[i] - _mesh_mins[i]) );
+             for (int i=0;i<3;i++) _distances[i] = ( 1.0 / (_mesh_maxs[i] - _mesh_mins[i]) );
         }
 
-        std::vector<std::size_t> _coordinates;
-        std::vector<double> _mesh_mins, _mesh_maxs;
-        std::vector<double> _lower_values, _upper_values;
-        std::vector<double> _distances;
+        std::size_t *_coordinates;
+        double *_mesh_mins, *_mesh_maxs;
+        double *_lower_values, *_upper_values;
+        double _distances[3];
     };
 }
 '''
