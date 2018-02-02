@@ -1,0 +1,10 @@
+#!/bin/sh
+# husky
+cd .
+./scripts/lint
+if [ $? -ne 0 ]; then
+  echo
+  echo "husky - pre-commit hook failed (add --no-verify to bypass)"
+  echo
+  exit 1
+fi

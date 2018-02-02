@@ -1,0 +1,4 @@
+#! /bin/bash
+
+docker build -t pypnp:current images/
+cp .githooks/pre-commit .git/hooks/pre-commit

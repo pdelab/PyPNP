@@ -1,0 +1,4 @@
+#! /bin/bash
+
+clear
+docker run -ti --rm -v $(pwd):/home/fenics/PyPNP pypnp:current
