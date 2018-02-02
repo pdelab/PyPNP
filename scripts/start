@@ -1,0 +1,5 @@
+#! /bin/bash
+
+clear && \
+docker build -t pypnp:current images/ && \
+docker run -ti --rm -v $(pwd):/home/fenics/PyPNP pypnp:current

@@ -4,7 +4,7 @@ if hash pycodestyle 2>/dev/null
 then
   pycodestyle *.py **/*.py
 else
+  echo "You need to add path/to/pycodestyle to your PATH!"
   pip install --upgrade pycodestyle --prefix=/usr/local
   pycodestyle *.py **/*.py
-  echo "You need to add path/to/pycodestyle to your PATH!"
 fi
