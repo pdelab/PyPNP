@@ -48,20 +48,23 @@ DMesh << mesh
 
 # Two ways to do it Python or C++
 coordinates = np.array(params.coordinates, dtype=np.uintp)
+mesh_mins = np.array([-Lenghts[coordinates[0]]/2.0,
+                      -Lenghts[coordinates[1]]/2.0,
+                      -Lenghts[coordinates[2]]/2.0], dtype=np.float64)
+mesh_maxs = np.array([Lenghts[coordinates[0]]/2.0,
+                      Lenghts[coordinates[1]]/2.0,
+                      Lenghts[coordinates[2]]/2.0], dtype=np.float64)
 lower_values = np.array(params.lower_values, dtype=np.float64)
 upper_values = np.array(params.upper_values, dtype=np.float64)
-CationExpression = Expression(expressions.LinearFunction_cpp, degree=2)
-CationExpression.update(coordinates[0], -Lenghts[coordinates[0]]/2.0,
-                        Lenghts[coordinates[0]]/2.0,
-                        lower_values[0], upper_values[0])
-AnionExpression = Expression(expressions.LinearFunction_cpp, degree=2)
-AnionExpression.update(coordinates[1], -Lenghts[coordinates[1]]/2.0,
-                       Lenghts[coordinates[0]]/2.0,
-                       lower_values[1], upper_values[1])
-PotentialExpression = Expression(expressions.LinearFunction_cpp, degree=2)
-PotentialExpression.update(coordinates[2], -Lenghts[coordinates[2]]/2.0,
-                           Lenghts[coordinates[2]]/2.0,
-                           lower_values[2], upper_values[2])
+# Python
+# uExpression = expressions.Linear_Functions(coordinates,
+#                                            mesh_mins, mesh_maxs,
+#                                            lower_values, upper_values,
+#                                            degree=2)
+# C++
+uExpression = Expression(expressions.LinearFunctions_cpp, degree=2)
+uExpression.update(coordinates, mesh_mins, mesh_maxs,
+                   lower_values, upper_values)
 
 
 def boundary(x, on_boundary):
@@ -77,23 +80,15 @@ CG = FiniteElement("Lagrange", mesh.ufl_cell(), 1)
 CGFS = FunctionSpace(mesh, CG)
 V = FunctionSpace(mesh, MixedElement((CG, CG, CG)))
 
-(Cat, An, Phi) = TrialFunction(V)
-(cat, an, phi) = TestFunction(V)
+u = TrialFunction(V)
+v = TestFunction(V)
 
 #  Previous Iterates
-CatCat = Function(CGFS)
-AnAn = Function(CGFS)
-EsEs = Function(CGFS)
-CatCat.interpolate(CationExpression)
-AnAn.interpolate(AnionExpression)
-EsEs.interpolate(PotentialExpression)
 Solution = Function(V)
-FCat = IMG_DIR+"Cat"
-FAn = IMG_DIR+"An"
-FPhi = IMG_DIR+"Phi"
-DCat = DATA_DIR+"Cat"
-DAn = DATA_DIR+"An"
-DPhi = DATA_DIR+"Phi"
+FFig = IMG_DIR+"Solution"
+DData = DATA_DIR+"Solution"
+uu = Function(V)
+uu.interpolate(uExpression)
 
 # Coefficients
 eps = Constant(params.eps)
@@ -103,27 +98,27 @@ Dn = Constant(params.Dn)
 qn = Constant(params.qn)
 
 # Bilinear Form
-a = (Dp*exp(CatCat) * (inner(grad(Cat), grad(cat)) +
-                       inner(grad(CatCat) + qp * grad(EsEs), grad(cat))
-                       * Cat)) * dx \
-    + (qp * Dp*exp(CatCat) * inner(grad(Phi), grad(cat))) * dx \
-    + (Dn*exp(AnAn) * (inner(grad(An), grad(an)) +
-                       inner(grad(AnAn) + qn * grad(EsEs), grad(an))
-                       * An)) * dx \
-    + (qn*Dn*exp(AnAn) * inner(grad(Phi), grad(an))) * dx \
-    + (eps * inner(grad(Phi), grad(phi))) * dx \
-    + (-(qp*exp(CatCat)*Cat + qn*exp(AnAn)*An)*phi) * dx
+a = (Dp*exp(uu[0]) * (inner(grad(u[0]), grad(v[0])) +
+                      inner(grad(uu[0]) + qp * grad(uu[2]), grad(v[0]))
+                      * u[0])) * dx \
+    + (qp * Dp*exp(uu[0]) * inner(grad(u[2]), grad(v[0]))) * dx \
+    + (Dn*exp(uu[1]) * (inner(grad(u[1]), grad(v[1])) +
+                        inner(grad(uu[1]) + qn * grad(uu[2]), grad(v[1]))
+                        * u[1])) * dx \
+    + (qn*Dn*exp(uu[1]) * inner(grad(u[2]), grad(v[1]))) * dx \
+    + (eps * inner(grad(u[2]), grad(v[2]))) * dx \
+    + (-(qp*exp(uu[0])*u[0] + qn*exp(uu[1])*u[1])*v[2]) * dx
 
 # Linear Form
-L = - (Dp * exp(CatCat) * (inner(grad(CatCat), grad(cat)) +
-                           inner(grad(CatCat) + qp*grad(EsEs), grad(cat))
-                           * CatCat))*dx \
-    - (qp * Dp * exp(CatCat) * inner(grad(EsEs), grad(cat)))*dx \
-    - (Dn*exp(AnAn) * (inner(grad(AnAn), grad(an)) + inner(grad(AnAn) +
-                       qn * grad(EsEs), grad(an))*AnAn))*dx \
-    - (qn * Dn * exp(AnAn) * inner(grad(EsEs), grad(an))) * dx \
-    - (eps * inner(grad(EsEs), grad(phi))) * dx \
-    - (- (qp * exp(CatCat)*CatCat + qn * exp(AnAn) * AnAn) * phi)*dx
+L = - (Dp * exp(uu[0]) * (inner(grad(uu[0]), grad(v[0])) +
+                          inner(grad(uu[0]) + qp*grad(uu[2]), grad(v[0]))
+                          * uu[0]))*dx \
+    - (qp * Dp * exp(uu[0]) * inner(grad(uu[2]), grad(v[0])))*dx \
+    - (Dn*exp(uu[1]) * (inner(grad(uu[1]), grad(v[1])) + inner(grad(uu[1]) +
+                        qn * grad(uu[2]), grad(v[1]))*uu[1]))*dx \
+    - (qn * Dn * exp(uu[1]) * inner(grad(uu[2]), grad(v[1]))) * dx \
+    - (eps * inner(grad(uu[2]), grad(v[2]))) * dx \
+    - (- (qp * exp(uu[0])*uu[0] + qn * exp(uu[1]) * uu[1]) * v[2])*dx
 
 # Parameters
 tol = params.tol
@@ -144,8 +139,8 @@ solver.parameters["monitor_convergence"] = params.monitor_convergence
 
 # Newton's Loop
 print "Starting Newton's loop..."
-nlsolvers.NewtonSolver(solver, a, L, V, [bc], [CatCat, AnAn, EsEs],
-                       itmax, tol, [FCat, FAn, FPhi], [DCat, DAn, DPhi],
+nlsolvers.NewtonSolver(solver, a, L, V, bc, uu,
+                       itmax, tol, FFig, DData,
                        Residual="relative", PrintFig=params.PrintFig,
                        PrintData=params.PrintData, Show=params.show)
 
