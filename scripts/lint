@@ -5,6 +5,7 @@ then
   pycodestyle *.py **/*.py
 else
   echo "You need to add path/to/pycodestyle to your PATH!"
+  echo "installing pycodestyle"
   pip install --upgrade pycodestyle --prefix=/usr/local
   pycodestyle *.py **/*.py
 fi
