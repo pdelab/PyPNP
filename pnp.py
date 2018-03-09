@@ -154,7 +154,7 @@ elif params.linear_solver == "Eigen":
     solver.parameters["monitor_convergence"] = params.monitor_convergence
 
 elif params.linear_solver == "FASP":
-    solver = EigenKrylovSolver("gmres", params.linear_precon)
+    solver = fps.solver()
     if  params.linear_solver_bsr is not None:
         solver.read_params( params.linear_solver_bsr)
     else:
