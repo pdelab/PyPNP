@@ -28,7 +28,7 @@ else:
     print "CSR MAtrix test has an ERROR"
 
 # Test With FENiCS
-print "Test of FASP interface with FENiCS...",
+print "Test of FASP interface with FENiCS..."
 if has_linear_algebra_backend("Eigen"):
         parameters["linear_algebra_backend"] = "Eigen"
 else:
@@ -47,10 +47,10 @@ g = Expression("sin(5*x[0])", degree=2)
 a = inner(grad(u), grad(v))*dx
 L = f*v*dx + g*v*ds
 x = Function(V)
-x.interpolate(u0)
 A = assemble(a)
 b = assemble(L)
 bc.apply(A,b)
+x.vector().set_local(b.array())
 solver2 = fps.solver()
 solver2.read_params("./bsr.dat")
 status = solver2.solve(A, b, x)
