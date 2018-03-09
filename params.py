@@ -28,12 +28,15 @@ lower_values = [0, -2.0, -1.0]
 upper_values = [-2.0, 0.0, 1.0]
 
 # Linear Solver
-linear_precon = 'ilu'
+linear_solver = 'FASP'  # 'FASP' 'PETSc' "Eigen"
+linear_precon = 'ILU'
 linear_tol = 1E-8
 linear_itmax = 100
 gmres_restart = 10
 nonzero_initial_guess = False
 monitor_convergence = False
+prints = 1
+linear_solver_bsr = './bsr.dat'  # or None
 
 # Newton Solver
 tol = 1E-8

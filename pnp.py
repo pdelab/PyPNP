@@ -8,6 +8,8 @@
 from dolfin import *
 import numpy as np
 from pnpmodule import *
+import ctypes
+import fasppy.faspsolver as fps
 
 import sys
 import imp
@@ -20,10 +22,15 @@ print '#### Solving the PNP equations                ####'
 print '##################################################'
 
 # Chose the backend type
-if has_linear_algebra_backend("PETSc"):
+if params.linear_solver=='PETSc' and has_linear_algebra_backend("PETSc"):
     parameters["linear_algebra_backend"] = "PETSc"
-elif has_linear_algebra_backend("Eigen"):
+    params.linear_precon = params.linear_precon.lower()
+elif params.linear_solver=='Eigen' and has_linear_algebra_backend("Eigen"):
     parameters["linear_algebra_backend"] = "Eigen"
+    params.linear_precon = params.linear_precon.lower()
+elif params.linear_solver=='FASP' and has_linear_algebra_backend("Eigen"):
+        parameters["linear_algebra_backend"] = "Eigen"
+        params.linear_precon = params.linear_precon.upper()
 else:
     print "DOLFIN has not been configured with PETSc or Eigen."
     exit()
@@ -131,16 +138,29 @@ itmax = params.itmax
 it = 0
 u0 = Constant((0.0, 0.0, 0.0))
 bc = DirichletBC(V, u0, boundary)
-if parameters["linear_algebra_backend"] == "PETSc":
+if params.linear_solver == 'PETSc':
     solver = PETScKrylovSolver("gmres", params.linear_precon)
     solver.ksp().setGMRESRestart(params.gmres_restart)
-if parameters["linear_algebra_backend"] == "Eigen":
-    solver = EigenKrylovSolver("gmres", params.linear_precon)
-solver.parameters["relative_tolerance"] = params.linear_tol
-solver.parameters["maximum_iterations"] = params.linear_itmax
-solver.parameters["nonzero_initial_guess"] = params.nonzero_initial_guess
-solver.parameters["monitor_convergence"] = params.monitor_convergence
+    solver.parameters["relative_tolerance"] = params.linear_tol
+    solver.parameters["maximum_iterations"] = params.linear_itmax
+    solver.parameters["nonzero_initial_guess"] = params.nonzero_initial_guess
+    solver.parameters["monitor_convergence"] = params.monitor_convergence
 
+elif params.linear_solver == "Eigen":
+    solver = EigenKrylovSolver("gmres", params.linear_precon)
+    solver.parameters["relative_tolerance"] = params.linear_tol
+    solver.parameters["maximum_iterations"] = params.linear_itmax
+    solver.parameters["nonzero_initial_guess"] = params.nonzero_initial_guess
+    solver.parameters["monitor_convergence"] = params.monitor_convergence
+
+elif params.linear_solver == "FASP":
+    solver = EigenKrylovSolver("gmres", params.linear_precon)
+    if  params.linear_solver_bsr is not None:
+        solver.read_params( params.linear_solver_bsr)
+    else:
+        solver.set_params('GMRes',  params.linear_precon, 1,
+                          params.linear_itmax, params.linear_tol,
+                          params.gmres_restar, params.prints)
 
 # Newton's Loop
 print "Starting Newton's loop..."
