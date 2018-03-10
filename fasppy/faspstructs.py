@@ -189,8 +189,8 @@ class AMG_param(ctypes.Structure):
 class input_param(ctypes.Structure):
     __fields__ = [("print_level", ctypes.c_short),
                   ("output_type", ctypes.c_short),
-                  ("inifile", ctypes.c_char_p),
-                  ("workdir", ctypes.c_char_p),
+                  ("inifile", ctypes.c_char*256),
+                  ("workdir", ctypes.c_char*256),
                   ("problem_num", ctypes.c_int),
                   ("solver_type", ctypes.c_short),
                   ("precond_type", ctypes.c_short),

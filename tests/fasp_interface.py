@@ -46,14 +46,27 @@ f = Expression("10*exp(-(pow(x[0] - 0.5, 2) + pow(x[1] - 0.5, 2)) / 0.02)", degr
 g = Expression("sin(5*x[0])", degree=2)
 a = inner(grad(u), grad(v))*dx
 L = f*v*dx + g*v*ds
-x = Function(V)
+sol = Function(V)
 A = assemble(a)
 b = assemble(L)
 bc.apply(A,b)
-x.vector().set_local(b.array())
+sol.vector().set_local(b.get_local())
 solver2 = fps.solver()
 solver2.read_params("./bsr.dat")
-status = solver2.solve(A, b, x)
+# solver2.set_params('GMRes', 'Diag', 1, 1000, 1e-6, 30, 1)
+
+row,col,val = as_backend_type(A).data()
+A_sp = sp.csr_matrix((val,col,row))
+b_v = np.array(b.get_local())
+x_v = np.array(sol.vector().get_local())
+
+status = solver2.solve_csr(A_sp, b_v, x_v)
+sol.vector().set_local(x_v)
+
+
+# solve(a == L, sol, bc)
+
+# status = solver2.solve(A, b, sol)
 file = File("poisson.pvd")
-file << x
+file << sol
 # print np.linalg.norm(A.dot(x) - b )

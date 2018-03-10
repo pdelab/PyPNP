@@ -2,7 +2,6 @@ import ctypes
 import numpy as np
 import scipy.sparse as sp
 import faspstructs as fpst
-import dolfin as df
 
 
 dirfasp = "/usr/local/faspsolver/lib/libfasp.so"
@@ -82,13 +81,6 @@ class solver:
 
     def print_methods(self):
         print "The possible iteratives methods are ", self.st_dict.keys()
-
-    def solve(self, A, b, x):
-        row,col,val = df.as_backend_type(A).data()
-        A_sp = sp.csr_matrix((val,col,row))
-        b_v = np.array(b.get_local())
-        x_v = np.array(x.vector().get_local())
-        self.solve_csr(A_sp,b_v,x_v)
 
     def solve_csr(self, A, b, x):
 
